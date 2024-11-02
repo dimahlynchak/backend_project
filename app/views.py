@@ -1,12 +1,12 @@
 from app import app
 from flask import request, jsonify, abort
 import uuid
+from datetime import datetime
 
 
-# Словник для зберігання даних про користувачів
 users = {}
-# Словник для зберігання даних про категорії
 categories = {}
+records = {}
 
 @app.route('/')
 def index():
@@ -64,3 +64,51 @@ def delete_category(category_id):
         abort(404, description="Category not found")
     return jsonify({"message": "Category deleted successfully"}), 200
 
+@app.post('/record')
+def create_record():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    category_id = data.get("category_id")
+    amount = data.get("amount")
+
+    if user_id not in users or category_id not in categories:
+        abort(400, description="Invalid user_id or category_id")
+
+    record_id = uuid.uuid4().hex
+    record = {
+        "id": record_id,
+        "user_id": user_id,
+        "category_id": category_id,
+        "amount": amount,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    records[record_id] = record
+    return jsonify(record), 201
+
+@app.get('/record/<record_id>')
+def get_record(record_id):
+    record = records.get(record_id)
+    if not record:
+        abort(404, description="Record not found")
+    return jsonify(record), 200
+
+@app.delete('/record/<record_id>')
+def delete_record(record_id):
+    record = records.pop(record_id, None)
+    if not record:
+        abort(404, description="Record not found")
+    return jsonify({"message": "Record deleted successfully"}), 200
+
+@app.get('/record')
+def get_records():
+    user_id = request.args.get("user_id")
+    category_id = request.args.get("category_id")
+
+    if not user_id and not category_id:
+        abort(400, description="At least one filter parameter is required (user_id, category_id)")
+
+    filtered_records = [
+        record for record in records.values()
+        if (not user_id or record["user_id"] == user_id) and (not category_id or record["category_id"] == category_id)
+    ]
+    return jsonify(filtered_records), 200
