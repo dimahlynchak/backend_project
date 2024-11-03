@@ -50,7 +50,7 @@ def create_category():
     categories[category_id] = category
     return jsonify(category), 201
 
-@app.get('/category/category_id>')
+@app.get('/category/<category_id>')
 def get_category(category_id):
     category = categories.get(category_id)
     if category is None:
