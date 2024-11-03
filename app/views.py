@@ -47,7 +47,7 @@ def create_category():
     category_data = request.get_json()
     category_id = uuid.uuid4().hex
     category = {"id": category_id, **category_data}
-    category[category_id] = category
+    categories[category_id] = category
     return jsonify(category), 201
 
 @app.get('/category/category_id>')
