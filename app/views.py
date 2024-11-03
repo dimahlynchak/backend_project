@@ -2,6 +2,7 @@ from app import app
 from flask import request, jsonify, abort
 import uuid
 from datetime import datetime
+import pytz
 
 
 users = {}
@@ -14,7 +15,9 @@ def index():
 
 @app.route('/healthcheck')
 def healthcheck():
-    return "Server is running!", 200
+    kiev_timezone = pytz.timezone("Europe/Kiev")
+    current_time = datetime.now(kiev_timezone).isoformat()
+    return f"Server is running! {current_time}", 200
 
 @app.post('/user')
 def create_user():
@@ -79,12 +82,13 @@ def create_record():
         abort(400, description="Invalid user_id or category_id")
 
     record_id = uuid.uuid4().hex
+    kiev_timezone = pytz.timezone("Europe/Kiev")
     record = {
         "id": record_id,
         "user_id": user_id,
         "category_id": category_id,
         "amount": amount,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(kiev_timezone).isoformat()
     }
     records[record_id] = record
     return jsonify(record), 201
