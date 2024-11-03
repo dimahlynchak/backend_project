@@ -15,7 +15,7 @@
 ### 1. Клонування репозиторію
 Клонуйте репозиторій на свій локальний комп'ютер:
 ```bash
-git clone <URL_вашого_репозиторію>
+git clone https://github.com/dimahlynchak/backend_project.git
 cd backend_project
 ```
 ### 2. Налаштування віртуального середовища (необов'язково)
