@@ -71,12 +71,16 @@ def delete_category(category_id):
         abort(404, description="Category not found")
     return jsonify({"message": "Category deleted successfully"}), 200
 
+
 @app.post('/record')
 def create_record():
+    user_id = request.args.get("user_id")
+    category_id = request.args.get("category_id")
     data = request.get_json()
-    user_id = data.get("user_id")
-    category_id = data.get("category_id")
     amount = data.get("amount")
+
+    if not user_id or not category_id:
+        abort(400, description="user_id and category_id are required")
 
     if user_id not in users or category_id not in categories:
         abort(400, description="Invalid user_id or category_id")
