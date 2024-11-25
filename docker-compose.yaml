@@ -10,3 +10,11 @@ services:
       PORT: "5010"
     ports:
       - "5010:5010"
+  db:
+    image: postgres:15.4-alpine3.18
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
