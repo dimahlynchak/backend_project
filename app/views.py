@@ -1,8 +1,9 @@
-from app import app
+from flask import current_app as app  # Використовуємо вже створений додаток
 from flask import request, jsonify, abort
 import uuid
 from datetime import datetime
 import pytz
+from app import db, models
 
 
 users = {}
@@ -124,3 +125,27 @@ def get_records():
         if (not user_id or record["user_id"] == user_id) and (not category_id or record["category_id"] == category_id)
     ]
     return jsonify(filtered_records), 200
+
+@app.post('/currency')
+def create_currency():
+    data = request.get_json()
+    currency = models.Currency(
+        id=uuid.uuid4().hex,
+        name=data["name"],
+        code=data["code"]
+    )
+    db.session.add(currency)
+    db.session.commit()
+    return jsonify({"id": currency.id, "name": currency.name, "code": currency.code}), 201
+
+@app.get('/currencies')
+def get_currencies():
+    currencies = models.Currency.query.all()
+    return jsonify([{"id": currency.id, "name": currency.name, "code": currency.code} for currency in currencies]), 200
+
+@app.get('/currency/<currency_id>')
+def get_currency(currency_id):
+    currency = models.Currency.query.get(currency_id)
+    if not currency:
+        abort(404, description="Currency not found")
+    return jsonify({"id": currency.id, "name": currency.name, "code": currency.code}), 200
