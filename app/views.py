@@ -103,6 +103,32 @@ def delete_user(user_id):
     db.session.commit()
     return jsonify({"message": "User deleted successfully"}), 200
 
+@app.put('/user/<user_id>/currency/<currency_id>')
+def set_user_currency(user_id, currency_id):
+    # Перевіряємо користувача
+    user = models.User.query.get(user_id)
+    if not user:
+        abort(404, description="User not found")
+
+    # Перевіряємо валюту
+    currency = models.Currency.query.get(currency_id)
+    if not currency:
+        abort(404, description="Currency not found")
+
+    # Встановлюємо нову валюту
+    user.default_currency_id = currency_id
+    db.session.commit()
+
+    return jsonify({
+        "message": "Currency updated successfully",
+        "user_id": user_id,
+        "new_currency": {
+            "id": currency.id,
+            "name": currency.name,
+            "code": currency.code
+        }
+    }), 200
+
 @app.post('/category')
 def create_category():
     category_data = request.get_json()
