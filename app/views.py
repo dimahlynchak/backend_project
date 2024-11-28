@@ -1,4 +1,4 @@
-from flask import current_app as app  # Використовуємо вже створений додаток
+from flask import current_app as app
 from flask import request, jsonify, abort
 import uuid
 from datetime import datetime
@@ -23,27 +23,84 @@ def healthcheck():
 @app.post('/user')
 def create_user():
     user_data = request.get_json()
+    currency_id = request.args.get("currency_id")  # Передача currency_id через параметр URL
+
+    # Якщо currency_id не передано, шукаємо валюту за замовчуванням (USD)
+    if not currency_id:
+        default_currency = models.Currency.query.filter_by(code="USD").first()
+        if not default_currency:
+            abort(500, description="Default currency (USD) is not available in the system.")
+        currency_id = default_currency.id
+
+    # Перевірка, чи існує валюта з переданим currency_id
+    selected_currency = models.Currency.query.get(currency_id)
+    if not selected_currency:
+        abort(400, description="Invalid currency_id provided.")
+
+    # Створення нового користувача
     user_id = uuid.uuid4().hex
-    user = {"id": user_id, **user_data}
-    users[user_id] = user
-    return jsonify(user), 201
+    new_user = models.User(id=user_id, name=user_data["name"], default_currency_id=currency_id)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({
+        "id": new_user.id,
+        "name": new_user.name,
+        "default_currency": {"id": selected_currency.id, "name": selected_currency.name, "code": selected_currency.code}
+    }), 201
 
 @app.get('/users')
 def get_users():
-    return jsonify(list(users.values())), 200
+    users = models.User.query.all()
+    response = []
+
+    for user in users:
+        # Перевіряємо, чи є валюта
+        currency = models.Currency.query.get(user.default_currency_id)
+
+        # Формуємо відповідь
+        if currency:
+            response.append({
+                "id": user.id,
+                "name": user.name,
+                "default_currency": {
+                    "id": currency.id,
+                    "name": currency.name,
+                    "code": currency.code
+                }
+            })
+        else:
+            response.append({
+                "id": user.id,
+                "name": user.name,
+                "default_currency": None  # Валюта відсутня
+            })
+
+    return jsonify(response), 200
 
 @app.get('/user/<user_id>')
 def get_user(user_id):
-    user = users.get(user_id)
-    if user is None:
-        abort(404, description="User not found")
-    return jsonify(user), 200
+    user = models.User.query.get(user_id)
+    if not user:
+        abort(404, description="User not found.")
+    currency = models.Currency.query.get(user.default_currency_id)
+    return jsonify({
+        "id": user.id,
+        "name": user.name,
+        "default_currency": {
+            "id": currency.id,
+            "name": currency.name,
+            "code": currency.code
+        }
+    }), 200
 
 @app.delete('/user/<user_id>')
 def delete_user(user_id):
-    user = users.pop(user_id, None)
-    if user is None:
-        abort(404, description="User not found")
+    user = models.User.query.get(user_id)
+    if not user:
+        abort(404, description="User not found.")
+    db.session.delete(user)
+    db.session.commit()
     return jsonify({"message": "User deleted successfully"}), 200
 
 @app.post('/category')
