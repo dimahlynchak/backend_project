@@ -160,25 +160,45 @@ def delete_category(category_id):
 def create_record():
     user_id = request.args.get("user_id")
     category_id = request.args.get("category_id")
+    currency_id = request.args.get("currency_id")  # Новий параметр для вказівки валюти
     data = request.get_json()
     amount = data.get("amount")
 
-    if not user_id or not category_id:
-        abort(400, description="user_id and category_id are required")
+    # Перевірка обов'язкових полів
+    if not user_id or not category_id or not amount:
+        abort(400, description="user_id, category_id, and amount are required")
 
-    if user_id not in users or category_id not in categories:
-        abort(400, description="Invalid user_id or category_id")
+    # Перевірка існування користувача
+    user = models.User.query.get(user_id)
+    if not user:
+        abort(404, description="User not found.")
 
+    # Перевірка існування категорії
+    category = categories.get(category_id)
+    if not category:
+        abort(404, description="Category not found.")
+
+    # Встановлення валюти: якщо currency_id передано, перевіряємо його; якщо ні, беремо валюту за замовчуванням
+    if currency_id:
+        currency = models.Currency.query.get(currency_id)
+        if not currency:
+            abort(400, description="Invalid currency_id provided.")
+    else:
+        currency = models.Currency.query.get(user.default_currency_id)
+
+    # Створення запису
     record_id = uuid.uuid4().hex
     kiev_timezone = pytz.timezone("Europe/Kiev")
     record = {
         "id": record_id,
         "user_id": user_id,
         "category_id": category_id,
+        "currency": {"id": currency.id, "name": currency.name, "code": currency.code},
         "amount": amount,
         "timestamp": datetime.now(kiev_timezone).isoformat()
     }
     records[record_id] = record
+
     return jsonify(record), 201
 
 @app.get('/record/<record_id>')
