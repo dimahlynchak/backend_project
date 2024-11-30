@@ -1,4 +1,4 @@
-from flask import current_app as app
+from flask import current_app as app, Blueprint
 from flask import request, jsonify, abort
 import uuid
 from datetime import datetime
@@ -6,21 +6,23 @@ import pytz
 from app import db, models
 
 
+views_bp = Blueprint('views', __name__)
+
 users = {}
 categories = {}
 records = {}
 
-@app.route('/')
+@views_bp.route('/')
 def index():
     return "Welcome to my Flask App!", 200
 
-@app.route('/healthcheck')
+@views_bp.route('/healthcheck')
 def healthcheck():
     kiev_timezone = pytz.timezone("Europe/Kiev")
     current_time = datetime.now(kiev_timezone).isoformat()
     return f"Server is running! {current_time}", 200
 
-@app.post('/user')
+@views_bp.post('/user')
 def create_user():
     user_data = request.get_json()
     currency_id = request.args.get("currency_id")  # Передача currency_id через параметр URL
@@ -49,7 +51,7 @@ def create_user():
         "default_currency": {"id": selected_currency.id, "name": selected_currency.name, "code": selected_currency.code}
     }), 201
 
-@app.get('/users')
+@views_bp.get('/users')
 def get_users():
     users = models.User.query.all()
     response = []
@@ -78,7 +80,7 @@ def get_users():
 
     return jsonify(response), 200
 
-@app.get('/user/<user_id>')
+@views_bp.get('/user/<user_id>')
 def get_user(user_id):
     user = models.User.query.get(user_id)
     if not user:
@@ -94,7 +96,7 @@ def get_user(user_id):
         }
     }), 200
 
-@app.delete('/user/<user_id>')
+@views_bp.delete('/user/<user_id>')
 def delete_user(user_id):
     user = models.User.query.get(user_id)
     if not user:
@@ -103,7 +105,7 @@ def delete_user(user_id):
     db.session.commit()
     return jsonify({"message": "User deleted successfully"}), 200
 
-@app.put('/user/<user_id>/currency/<currency_id>')
+@views_bp.put('/user/<user_id>/currency/<currency_id>')
 def set_user_currency(user_id, currency_id):
     # Перевіряємо користувача
     user = models.User.query.get(user_id)
@@ -129,7 +131,7 @@ def set_user_currency(user_id, currency_id):
         }
     }), 200
 
-@app.post('/category')
+@views_bp.post('/category')
 def create_category():
     category_data = request.get_json()
     category_id = uuid.uuid4().hex
@@ -137,18 +139,18 @@ def create_category():
     categories[category_id] = category
     return jsonify(category), 201
 
-@app.get('/categories')
+@views_bp.get('/categories')
 def get_categories():
     return jsonify(list(categories.values())), 200
 
-@app.get('/category/<category_id>')
+@views_bp.get('/category/<category_id>')
 def get_category(category_id):
     category = categories.get(category_id)
     if category is None:
         abort(404, description="Category not found")
     return jsonify(category), 200
 
-@app.delete('/category/<category_id>')
+@views_bp.delete('/category/<category_id>')
 def delete_category(category_id):
     category = categories.pop(category_id, None)
     if category is None:
@@ -156,7 +158,7 @@ def delete_category(category_id):
     return jsonify({"message": "Category deleted successfully"}), 200
 
 
-@app.post('/record')
+@views_bp.post('/record')
 def create_record():
     user_id = request.args.get("user_id")
     category_id = request.args.get("category_id")
@@ -201,21 +203,21 @@ def create_record():
 
     return jsonify(record), 201
 
-@app.get('/record/<record_id>')
+@views_bp.get('/record/<record_id>')
 def get_record(record_id):
     record = records.get(record_id)
     if not record:
         abort(404, description="Record not found")
     return jsonify(record), 200
 
-@app.delete('/record/<record_id>')
+@views_bp.delete('/record/<record_id>')
 def delete_record(record_id):
     record = records.pop(record_id, None)
     if not record:
         abort(404, description="Record not found")
     return jsonify({"message": "Record deleted successfully"}), 200
 
-@app.get('/record')
+@views_bp.get('/record')
 def get_records():
     user_id = request.args.get("user_id")
     category_id = request.args.get("category_id")
@@ -229,7 +231,7 @@ def get_records():
     ]
     return jsonify(filtered_records), 200
 
-@app.post('/currency')
+@views_bp.post('/currency')
 def create_currency():
     data = request.get_json()
     currency = models.Currency(
@@ -241,12 +243,12 @@ def create_currency():
     db.session.commit()
     return jsonify({"id": currency.id, "name": currency.name, "code": currency.code}), 201
 
-@app.get('/currencies')
+@views_bp.get('/currencies')
 def get_currencies():
     currencies = models.Currency.query.all()
     return jsonify([{"id": currency.id, "name": currency.name, "code": currency.code} for currency in currencies]), 200
 
-@app.get('/currency/<currency_id>')
+@views_bp.get('/currency/<currency_id>')
 def get_currency(currency_id):
     currency = models.Currency.query.get(currency_id)
     if not currency:

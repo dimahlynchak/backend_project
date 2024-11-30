@@ -8,8 +8,16 @@ services:
       dockerfile: Dockerfile
     environment:
       PORT: "5010"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5010:5010"
+    networks:
+      - backend_network
+    depends_on:
+      - db
+
   db:
     image: postgres:15.4-alpine3.18
     environment:
@@ -18,3 +26,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
+    networks:
+      - backend_network
+
+networks:
+  backend_network:
+    driver: bridge
