@@ -8,4 +8,4 @@ RUN python -m pip install -r requirements.txt
 
 COPY . /app
 
-CMD flask --app app run -h 0.0.0.0 -p 5010
+CMD flask db upgrade && flask --app app run -h 0.0.0.0 -p 5010
