@@ -8,4 +8,6 @@ RUN python -m pip install -r requirements.txt
 
 COPY . /app
 
+RUN rm -rf /app/migrations
+
 CMD flask db init || true && flask db migrate || true && flask db upgrade && flask --app app run -h 0.0.0.0 -p 5010

@@ -2,14 +2,22 @@ from flask.cli import AppGroup
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+import os
 import uuid
 
 db = SQLAlchemy()
 migrate = Migrate()
 
+
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('app.config.Config')
+
+    # Визначення конфігурації за середовищем
+    env = os.getenv("FLASK_ENV", "development")
+    if env == "production":
+        app.config.from_object('app.config.ProductionConfig')
+    else:
+        app.config.from_object('app.config.DevelopmentConfig')
 
     db.init_app(app)
     migrate.init_app(app, db)
@@ -19,6 +27,7 @@ def create_app():
 
     app.register_blueprint(views_bp)
 
+    # Ініціалізація дефолтної валюти
     def add_default_currency():
         with app.app_context():
             if not models.Currency.query.filter_by(code="USD").first():
