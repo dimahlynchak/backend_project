@@ -1,25 +1,26 @@
-from app import app
-from flask import request, jsonify, abort
+from flask import Blueprint, request, jsonify, abort
 import uuid
 from datetime import datetime
 import pytz
 
+blueprint = Blueprint('main', __name__)
 
 users = {}
 categories = {}
 records = {}
 
-@app.route('/')
+@blueprint.route('/')
 def index():
     return "Welcome to my Flask App!", 200
 
-@app.route('/healthcheck')
+@blueprint.route('/healthcheck')
 def healthcheck():
     kiev_timezone = pytz.timezone("Europe/Kiev")
     current_time = datetime.now(kiev_timezone).isoformat()
     return f"Server is running! {current_time}", 200
 
-@app.post('/user')
+
+@blueprint.post('/user')
 def create_user():
     user_data = request.get_json()
     user_id = uuid.uuid4().hex
@@ -27,25 +28,25 @@ def create_user():
     users[user_id] = user
     return jsonify(user), 201
 
-@app.get('/users')
+@blueprint.get('/users')
 def get_users():
     return jsonify(list(users.values())), 200
 
-@app.get('/user/<user_id>')
+@blueprint.get('/user/<user_id>')
 def get_user(user_id):
     user = users.get(user_id)
     if user is None:
         abort(404, description="User not found")
     return jsonify(user), 200
 
-@app.delete('/user/<user_id>')
+@blueprint.delete('/user/<user_id>')
 def delete_user(user_id):
     user = users.pop(user_id, None)
     if user is None:
         abort(404, description="User not found")
     return jsonify({"message": "User deleted successfully"}), 200
 
-@app.post('/category')
+@blueprint.post('/category')
 def create_category():
     category_data = request.get_json()
     category_id = uuid.uuid4().hex
@@ -53,18 +54,18 @@ def create_category():
     categories[category_id] = category
     return jsonify(category), 201
 
-@app.get('/categories')
+@blueprint.get('/categories')
 def get_categories():
     return jsonify(list(categories.values())), 200
 
-@app.get('/category/<category_id>')
+@blueprint.get('/category/<category_id>')
 def get_category(category_id):
     category = categories.get(category_id)
     if category is None:
         abort(404, description="Category not found")
     return jsonify(category), 200
 
-@app.delete('/category/<category_id>')
+@blueprint.delete('/category/<category_id>')
 def delete_category(category_id):
     category = categories.pop(category_id, None)
     if category is None:
@@ -72,7 +73,7 @@ def delete_category(category_id):
     return jsonify({"message": "Category deleted successfully"}), 200
 
 
-@app.post('/record')
+@blueprint.post('/record')
 def create_record():
     user_id = request.args.get("user_id")
     category_id = request.args.get("category_id")
@@ -97,21 +98,21 @@ def create_record():
     records[record_id] = record
     return jsonify(record), 201
 
-@app.get('/record/<record_id>')
+@blueprint.get('/record/<record_id>')
 def get_record(record_id):
     record = records.get(record_id)
     if not record:
         abort(404, description="Record not found")
     return jsonify(record), 200
 
-@app.delete('/record/<record_id>')
+@blueprint.delete('/record/<record_id>')
 def delete_record(record_id):
     record = records.pop(record_id, None)
     if not record:
         abort(404, description="Record not found")
     return jsonify({"message": "Record deleted successfully"}), 200
 
-@app.get('/record')
+@blueprint.get('/record')
 def get_records():
     user_id = request.args.get("user_id")
     category_id = request.args.get("category_id")

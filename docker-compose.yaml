@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     environment:
       FLASK_ENV: development
-      POSTGRES_URL: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@db/$(POSTGRES_DB)
+      POSTGRES_URL: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB)
     ports:
       - "5010:5010"
     depends_on:
