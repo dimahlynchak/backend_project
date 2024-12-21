@@ -1,12 +1,26 @@
-version: '3'
-
 services:
   flask-app:
-    restart: always
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      PORT: "5010"
+      FLASK_ENV: development
+      POSTGRES_URL: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@db/$(POSTGRES_DB)
     ports:
       - "5010:5010"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
